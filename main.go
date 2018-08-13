@@ -11,6 +11,7 @@ import (
 	"GoStart/funcational/adder"
 	"GoStart/funcational"
 	"strings"
+	"GoStart/channel"
 )
 
 func main() {
@@ -36,28 +37,36 @@ func main() {
 	//fmt.Println(s)
 
 
-	testReader()
+	//testChannel()
+
+	//fmt.Println(f())
+
+
+	const (
+		a = iota   //0
+		b          //1
+		c          //2
+		d = "ha"   //独立值，iota += 1
+		e          //"ha"   iota += 1
+		f = 100    //iota +=1
+		g          //100  iota +=1
+		h = iota   //7,恢复计数
+		i          //8
+	)
+	fmt.Println(a,b,c,d,e,f,g,h,i)
 
 
 
-	/*fmt.Println(
-		testLongestString("abcabcdef"))
-	fmt.Println(
-		testLongestString("bbbbb"))
-	fmt.Println(
-		testLongestString("pwwkew"))
-	fmt.Println(
-		testLongestString(""))
-	fmt.Println(
-		testLongestString("b"))
-	fmt.Println(
-		testLongestString("abcdef"))
-	fmt.Println(
-		testLongestString("一二三二一"))
-	fmt.Println(
-		testLongestString(
-			"黑化肥挥发发灰会花飞灰化肥挥发发黑会飞花"))*/
 
+
+
+}
+
+func f() (r int) {
+	defer func(r int) {
+		r = r + 5
+	}(r)
+	return 1
 }
 
 func testLongestString(s string) int{
@@ -122,4 +131,8 @@ func testReader(){
 	other.PrintFile("README.md")
 
 	other.PrintcFileContents(strings.NewReader("adsf"))
+}
+
+func testChannel()  {
+	channel.ChanDemo()
 }
