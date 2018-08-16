@@ -2,7 +2,6 @@ package parser
 
 import (
 	"testing"
-	"fmt"
 	"io/ioutil"
 )
 
@@ -13,5 +12,11 @@ func TestParseCityList(t *testing.T) {
 		panic(err)
 	}
 
-	fmt.Printf("%s\n",contents)
+	result := ParseCityList(contents)
+	const resultSize = 470
+	if len(result.Requests) != resultSize {
+		t.Errorf("result should have %d"+
+			"requsts: but had %d",
+				resultSize,len(result.Requests))
+	}
 }
