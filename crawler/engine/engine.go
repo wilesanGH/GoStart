@@ -15,7 +15,8 @@ func Run(seeds ...Request){
 		r := requests[0]
 		requests = requests[1:]
 		log.Printf("fetching %s",r.Url)
-		body, err := fetcher.Fetch(r.Url)
+		body, err := fetcher.Fetch(r.Url,r.NeedVPN)
+		//fmt.Printf("%s",body)
 		if err != nil{
 			log.Printf("Fetcher: error fetching url %s: %v",r.Url,err)
 		}

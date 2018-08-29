@@ -1,4 +1,4 @@
-package parser
+package cl
 
 import (
 	"GoStart/crawler/engine"

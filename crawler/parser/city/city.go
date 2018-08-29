@@ -1,4 +1,4 @@
-package parser
+package city
 
 import (
 	"GoStart/crawler/engine"

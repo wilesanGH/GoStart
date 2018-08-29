@@ -10,16 +10,30 @@ import (
 	"golang.org/x/text/transform"
 	"golang.org/x/text/encoding/unicode"
 	"log"
+	"os"
 )
 
-func Fetch(url string) ([]byte,error){
-	//resp,err := http.Get(url)
+func Fetch(myUrl string,needVPN bool) ([]byte,error){
+	//resp,err := http.Get(myUrl)
+	/*urli := url.URL{}
+	urlproxy, _ := urli.Parse("https://127.0.0.1:1080")
+	client := &http.Client{
+		Transport: &http.Transport{
+			Proxy: http.ProxyURL(urlproxy),
+		},
+	}*/
+	/*******************需要加VPN用*************************/
+	if needVPN {
+		os.Setenv("HTTP_PROXY", "http://127.0.0.1:1080")
+		os.Setenv("HTTPS_PROXY", "https://127.0.0.1:1080")
+	}
+	/************************************************/
 	client := &http.Client{}
-	req, err := http.NewRequest("GET",url,nil)
+	req, err := http.NewRequest("GET", myUrl,nil)
 	if err != nil{
 		return nil,err
 	}
-	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; WOW64; rv:61.0) Gecko/20")
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; …) Gecko/20100101 Firefox/61.0")
 	resp, err := client.Do(req)
 	if err != nil{
 		return nil,err
