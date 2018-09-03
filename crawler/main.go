@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	//params := fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8&parseTime=true", "root", "P@ssw0rd", "202.120.222.140:80", "crawler")
+	//params := fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8&parseTime=true", "root", "", "", "crawler")
 	//orm.InitialOrmEngine("mysql",params)
 	//cl.GetPageCount(nil)
 	e := engine.ConcurrentEngine{
