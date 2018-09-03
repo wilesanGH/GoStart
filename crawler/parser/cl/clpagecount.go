@@ -21,7 +21,7 @@ func GetPageCount(content []byte)engine.ParseResult{
 	for i:=1;i<=pageCount;i++ {
 		time.Sleep(1000)
 		pageId := strconv.Itoa(i)
-		engine.Run(engine.Request{
+		engine.SimpleEngine.Run(engine.Request{
 			Url:"http://www.t66y.com/thread0806.php?fid=7&search=&page="+string(pageId),
 			ParserFunc:ParseCLJS,
 			NeedVPN:true,

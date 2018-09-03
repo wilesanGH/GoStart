@@ -11,9 +11,15 @@ import (
 	"golang.org/x/text/encoding/unicode"
 	"log"
 	"os"
+	"time"
 )
 
+
+
+var rateLimiter = time.Tick(100 * time.Microsecond)
+
 func Fetch(myUrl string,needVPN bool) ([]byte,error){
+	<-rateLimiter
 	//resp,err := http.Get(myUrl)
 	/*urli := url.URL{}
 	urlproxy, _ := urli.Parse("https://127.0.0.1:1080")

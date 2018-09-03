@@ -10,7 +10,7 @@ import (
 
 var jszqListTitleRe = regexp.MustCompile(`<h3><a href="(htm_data/[0-9]/[0-9]+/)([0-9]+).html" target="_blank" id="">([^>]*)</a></h3>  `)
 
-var jszqListAuthorRe =regexp.MustCompile(`tid=([0-9]+)&page=e&fpage=1#a" class="f10"> ([^>]*) </a><br />by: ([^>]*)</td>`)
+var jszqListAuthorRe =regexp.MustCompile(`tid=([0-9]+)&page=e&fpage=[0-9]+#a" class="f10"> ([^>]*) </a><br />by: ([^>]*)</td>`)
 
 func ParseCLJS(content []byte) engine.ParseResult{
 
