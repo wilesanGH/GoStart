@@ -27,7 +27,7 @@ func CheckSubUrlReapt(url string) bool {
 
 //删除字符串中的「空格」「换行」「tab键」
 func DeleteSpaceNTab(str string) string {
-	str = strings.Replace(str, " ", "", -1)
+	//str = strings.Replace(str, " ", "", -1)
 	// 去除换行符
 	str = strings.Replace(str, "\n", "", -1)
 	str = strings.Replace(str, "\t", "", -1)

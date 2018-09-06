@@ -12,7 +12,7 @@ import (
 	"strings"
 )
 
-var UrlRe = regexp.MustCompile(`https://blog.csdn.net/[a-zA-z0-9]+/article/details/[0-9]+`)
+var UrlRe = regexp.MustCompile(`https://blog.csdn.net/[a-zA-z0-9_]+/article/details/[0-9]+`)
 
 var blogs []model.CSDN_BLOG
 
@@ -58,10 +58,12 @@ func GetCSDNBlog() {
 		}
 	})
 
+	count := 0
+
 	c.OnHTML("a[href]", func(e *colly.HTMLElement) {
 		link := e.Attr("href")
 		//fmt.Printf("Link found: %q -> %s\n", e.Text, link)
-		if util.CheckUrlReapt(link) {
+		if util.CheckUrlReapt(link) && count < 100000 {
 			c.Visit(e.Request.AbsoluteURL(link))
 		}
 	})
@@ -90,12 +92,14 @@ func GetCSDNBlog() {
 			csdnBlog.CsdnBase.Id,
 			csdnBlog.Title,
 			csdnBlog.CsdnBase.Url,
-			fmt.Sprint(csdnBlog.Keywords),
+			fmt.Sprint(csdnBlog.Keywords)[:len(fmt.Sprint(csdnBlog.Keywords))-1][1:],
 			csdnBlog.ReadCount,
 			csdnBlog.CommentCount,
 			csdnBlog.Date,
 			csdnBlog.CsdnBase.Body,
 		})
+		count++
+		log.Printf("count:%d\n", count)
 		log.Println(csdnBlog)
 
 	})
