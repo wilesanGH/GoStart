@@ -5,12 +5,22 @@ import (
 )
 
 var urlList = make(map[string]bool)
+var subUrlList = make(map[string]bool)
 
 func CheckUrlReapt(url string) bool {
 	if urlList[url] == true {
 		return false
 	}
 	urlList[url] = true
+	return true
+
+}
+
+func CheckSubUrlReapt(url string) bool {
+	if subUrlList[url] == true {
+		return false
+	}
+	subUrlList[url] = true
 	return true
 
 }

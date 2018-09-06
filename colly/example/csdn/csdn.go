@@ -53,8 +53,9 @@ func GetCSDNBlog() {
 		}
 
 		//fmt.Printf("Correct: %s",reqUrl+"\n")
-		rightUrlColly.Visit(reqUrl)
-
+		if util.CheckSubUrlReapt(reqUrl) {
+			rightUrlColly.Visit(reqUrl)
+		}
 	})
 
 	c.OnHTML("a[href]", func(e *colly.HTMLElement) {
