@@ -6,6 +6,8 @@ import (
 	"GoStart/colly/util"
 	"regexp"
 	"GoStart/colly/example/csdn/model"
+	"strings"
+	"strconv"
 )
 
 var UrlRe = regexp.MustCompile(`https://blog.csdn.net/[a-zA-z0-9]+/article/details/[0-9]+`)
@@ -54,7 +56,19 @@ func GetCSDNBlog()  {
 	})
 
 	rightUrlColly.OnHTML("div.blog-content-box", func(e *colly.HTMLElement) {
-		fmt.Printf("%s",e.Response.Body)
+		var err error
+		csdnBlog := model.CSDN_BLOG{}
+		csdnBlog.CsdnBase.Url = e.Request.URL.String()
+		csdnBlog.CsdnBase.Body = e.Text
+		csdnBlog.Title = e.ChildText("h1.title-article")
+		csdnBlog.Date = e.ChildText("span.time")
+		//str := strings.Split(e.ChildText("span.read-count"),"：")[1]
+		csdnBlog.ReadCount,err = strconv.Atoi(strings.Split(e.ChildText("span.read-count"),"：")[1])
+		if err != nil{
+			panic(err)
+		}
+
+
 	})
 
 	rightUrlColly.OnError(func(r *colly.Response, e error) {
