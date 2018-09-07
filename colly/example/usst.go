@@ -14,7 +14,7 @@ func Usst() {
 	c.OnHTML("a[href]", func(e *colly.HTMLElement) {
 		link := e.Attr("href")
 		fmt.Printf("Link found: %q -> %s\n", e.Text, link)
-		if util.CheckUrlRe(link) {
+		if util.CheckUrlReapt(link) {
 			go c.Visit(e.Request.AbsoluteURL(link))
 		}
 	})
