@@ -2,6 +2,7 @@ package util
 
 import (
 	"strings"
+	"fmt"
 )
 
 var urlList = make(map[string]bool)
@@ -23,6 +24,27 @@ func CheckSubUrlReapt(url string) bool {
 	subUrlList[url] = true
 	return true
 
+}
+
+func DeleteMoreTab(s string) string {
+	flag := false
+	var s2 []byte
+
+	for _, v := range []byte(s) {
+		if v == 9 && flag {
+			continue
+		}
+		if v== 9 {
+			flag = true
+		}else{
+			flag = false
+		}
+		s2 = append(s2,v)
+
+	}
+	s3 := string(s2)
+	fmt.Println(s3)
+	return s3
 }
 
 //删除字符串中的「空格」「换行」「tab键」

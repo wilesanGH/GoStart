@@ -12,8 +12,9 @@ import (
 	"strings"
 	"github.com/gocolly/colly/extensions"
 	"time"
-	"github.com/gocolly/colly/debug"
 	"github.com/gocolly/colly/proxy"
+	"github.com/satori/go.uuid"
+	"GoStart/colly/example/csdn/orm"
 )
 
 var UrlRe = regexp.MustCompile(`https://blog.csdn.net/[a-zA-z0-9_]+/article/details/[0-9]+`)
@@ -60,7 +61,6 @@ func GetCSDNBlog() {
 			//regexp.MustCompile("https://blog.csdn.net/code/.+"),
 
 		),
-		colly.Debugger(&debug.WebDebugger{}),
 
 	)
 
@@ -131,7 +131,7 @@ func GetCSDNBlog() {
 		csdnBlog := model.CSDN_BLOG{}
 		csdnBlog.CsdnBase.Url = e.Request.URL.String()
 		csdnBlog.Title = e.ChildText("h1.title-article")
-		csdnBlog.Date = e.ChildText("span.time")
+		csdnBlog.Time = e.ChildText("span.time")
 		csdnBlog.CsdnBase.Body = strings.Replace(strings.Replace(e.Text, "\n", "", -1), "\t", "", -1)
 		csdnBlog.ReadCount = strings.Split(e.ChildText("span.read-count"), "：")[1]
 		csdnBlog.Keywords = e.ChildAttrs("span.tags-box a", "data-track-view")
@@ -141,15 +141,15 @@ func GetCSDNBlog() {
 			//keywordstring = util.DeleteSpaceNTab(el.ChildText("a"))
 		})
 
-		csdnBlog.CsdnBase.Id = csdnBlog.CsdnBase.Url[strings.LastIndex(csdnBlog.CsdnBase.Url, "/")+1:]
+		csdnBlog.CsdnBase.Number = csdnBlog.CsdnBase.Url[strings.LastIndex(csdnBlog.CsdnBase.Url, "/")+1:]
 		writer.Write([]string{
-			csdnBlog.CsdnBase.Id,
+			csdnBlog.CsdnBase.Number,
 			csdnBlog.Title,
 			csdnBlog.CsdnBase.Url,
 			fmt.Sprint(csdnBlog.Keywords)[:len(fmt.Sprint(csdnBlog.Keywords))-1][1:],
 			csdnBlog.ReadCount,
 			csdnBlog.CommentCount,
-			csdnBlog.Date,
+			csdnBlog.Time,
 			//csdnBlog.CsdnBase.Body,
 		})
 
@@ -175,9 +175,8 @@ func GetCSDNBlog() {
 func GetCSDNBlog2() {
 
 
-
 	count := 0
-
+/*
 	fName := "d:csdn_v3.csv"
 	file, err := os.Create(fName)
 	if err != nil {
@@ -198,7 +197,7 @@ func GetCSDNBlog2() {
 	// Write CSV header
 	writer.Write([]string{"编号", "标题", "url", "关键字", "阅读数", "评论数", "发表时间", "内容"})
 
-
+*/
 
 
 
@@ -214,7 +213,7 @@ func GetCSDNBlog2() {
 			//regexp.MustCompile("https://blog.csdn.net/code/.+"),
 
 		),
-		colly.Debugger(&debug.WebDebugger{}),
+		colly.MaxDepth(3),
 
 	)
 
@@ -234,7 +233,7 @@ func GetCSDNBlog2() {
 	extensions.RandomUserAgent(parentColly)
 	extensions.Referrer(parentColly)
 	parentColly.Limit(&colly.LimitRule{
-		RandomDelay:1*time.Second,
+		RandomDelay:2*time.Second,
 		})
 
 
@@ -243,7 +242,7 @@ func GetCSDNBlog2() {
 
 
 	parentColly.OnRequest(func(r *colly.Request) {
-		fmt.Println("Visiting", r.URL.String())
+		//fmt.Println("Visiting", r.URL.String())
 	})
 
 	parentColly.OnResponse(func(r *colly.Response) {
@@ -251,11 +250,7 @@ func GetCSDNBlog2() {
 		if UrlRe.FindAllStringIndex(reqUrl, 1) == nil {
 			return
 		}
-
-		//fmt.Printf("Correct: %s",reqUrl+"\n")
-		if util.CheckSubUrlReapt(reqUrl) {
 			subColly.Visit(reqUrl)
-		}
 	})
 
 
@@ -263,10 +258,7 @@ func GetCSDNBlog2() {
 	parentColly.OnHTML("a[href]", func(e *colly.HTMLElement) {
 		link := e.Attr("href")
 		//fmt.Printf("Link found: %q -> %s\n", e.Text, link)
-		if util.CheckUrlReapt(link) {
 			parentColly.Visit(e.Request.AbsoluteURL(link))
-
-		}
 	})
 
 	parentColly.OnError(func(r *colly.Response, e error) {
@@ -275,43 +267,36 @@ func GetCSDNBlog2() {
 
 
 	subColly.OnRequest(func(r *colly.Request) {
-		fmt.Println("subColly Visiting", r.URL.String())
+		//fmt.Println("subColly Visiting", r.URL.String())
 	})
 	subColly.OnHTML("div.blog-content-box", func(e *colly.HTMLElement) {
 
-		csdnBlog := model.CSDN_BLOG{}
-		csdnBlog.CsdnBase.Url = e.Request.URL.String()
-		csdnBlog.Title = e.ChildText("h1.title-article")
-		csdnBlog.Date = e.ChildText("span.time")
-		csdnBlog.CsdnBase.Body = strings.Replace(strings.Replace(e.Text, "\n", "", -1), "\t", "", -1)
-		csdnBlog.ReadCount = strings.Split(e.ChildText("span.read-count"), "：")[1]
-		csdnBlog.Keywords = e.ChildAttrs("span.tags-box a", "data-track-view")
-		//var keywordstring string
+		csdn_blog := model.CSDN_DETAIL{}
+		u,_ := uuid.NewV4()
+		csdn_blog.Id = u.String()
+		csdn_blog.Url = e.Request.URL.String()
+		csdn_blog.Title = e.ChildText("h1.title-article")
+		csdn_blog.Time = e.ChildText("span.time")
+		csdn_blog.Body = strings.Replace(strings.Replace(e.Text, "\n", "", -1), "\t", "", -1)
+		csdn_blog.ReadCount = strings.Split(e.ChildText("span.read-count"), "：")[1]
 		e.ForEach("span.tags-box", func(_ int, el *colly.HTMLElement) {
-			csdnBlog.Keywords = util.DeleteSpaceNTabForSlice(strings.Split(el.ChildText("a"), "\t"))
-			//keywordstring = util.DeleteSpaceNTab(el.ChildText("a"))
+			csdn_blog.Keywords = strings.Replace(util.DeleteMoreTab(el.ChildText("a")),"\t"," ",-1)
+
 		})
 
-		csdnBlog.CsdnBase.Id = csdnBlog.CsdnBase.Url[strings.LastIndex(csdnBlog.CsdnBase.Url, "/")+1:]
-				writer.Write([]string{
-			csdnBlog.CsdnBase.Id,
-			csdnBlog.Title,
-			csdnBlog.CsdnBase.Url,
-			fmt.Sprint(csdnBlog.Keywords)[:len(fmt.Sprint(csdnBlog.Keywords))-1][1:],
-			csdnBlog.ReadCount,
-			csdnBlog.CommentCount,
-			csdnBlog.Date,
-			//csdnBlog.CsdnBase.Body,
-		})
+		csdn_blog.Number = csdn_blog.Url[strings.LastIndex(csdn_blog.Url, "/")+1:]
 
+		//fmt.Printf("Insert csdbBlog:%v", csdn_blog)
+
+		c,_ := orm.CsdnEngine.Table("csdnblog").Insert(&csdn_blog)
+		fmt.Println(c)
 		count++
 		log.Printf("colly count: %d",count)
 
-			writer.Flush()
 
 
 		/*log.Printf("count:%d\n", count)
-		log.Println(csdnBlog)*/
+		log.Println(csdn_blog)*/
 
 	})
 
