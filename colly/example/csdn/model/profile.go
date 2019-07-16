@@ -26,5 +26,5 @@ type CSDN_DETAIL struct{
 	Time string `xorm:"varchar(50) notnull  'time'"`
 	ReadCount string `xorm:"varchar(10)   'readCount'"`
 	CommentCount string `xorm:"varchar(500)   'commentCount'"`
-	Body string `xorm:"longtext   'body'"`
+	Body string `xorm:"longtext 'body'"`
 }

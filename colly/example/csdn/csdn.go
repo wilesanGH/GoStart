@@ -12,7 +12,8 @@ import (
 	"strings"
 	"github.com/gocolly/colly/extensions"
 	"time"
-	"github.com/gocolly/colly/proxy"
+	"github.com/velebak/colly-sqlite3-storage/colly/sqlite3"
+	"github.com/gocolly/colly/queue"
 	"github.com/satori/go.uuid"
 	"GoStart/colly/example/csdn/orm"
 )
@@ -64,13 +65,6 @@ func GetCSDNBlog() {
 
 	)
 
-	if p, err := proxy.RoundRobinProxySwitcher(
-			"http://196.202.228.139:8080",
-					"http://80.191.244.217:80",
-					"http://94.74.177.181:80",
-	); err == nil {
-		parentColly.SetProxyFunc(p)
-	}
 
 	extensions.RandomUserAgent(parentColly)
 	extensions.Referrer(parentColly)
@@ -171,33 +165,21 @@ func GetCSDNBlog() {
 
 }
 
-
 func GetCSDNBlog2() {
 
 
 	count := 0
-/*
-	fName := "d:csdn_v3.csv"
-	file, err := os.Create(fName)
-	if err != nil {
-		log.Fatalf("Cannot create file %q: %s\n", fName, err)
-		return
+
+	storage1 := &sqlite3.Storage{
+		Filename: "F://colly/collyDB/results1.db",
 	}
-	defer file.Close()
-	defer func() {
-		if err := recover(); err != nil {
-			fmt.Printf("panic %s\n", err)
-		}
-	}()
+	storage2 := &sqlite3.Storage{
+		Filename: "F://colly/collyDB/results2.db",
+	}
 
-	file.WriteString("\xEF\xBB\xBF")
-	writer := csv.NewWriter(file)
-	defer writer.Flush()
+	defer storage1.Close()
 
-	// Write CSV header
-	writer.Write([]string{"编号", "标题", "url", "关键字", "阅读数", "评论数", "发表时间", "内容"})
-
-*/
+	defer storage2.Close()
 
 
 
@@ -214,35 +196,36 @@ func GetCSDNBlog2() {
 
 		),
 		colly.MaxDepth(3),
-
+		colly.CacheDir("F://colly/collyCache"),
 	)
 
-	/*p, err := proxy.RoundRobinProxySwitcher(
-		"http://196.202.228.139:8080",
-		"http://80.191.244.217:80",
-		"http://94.74.177.181:80",
-		"https://54.39.97.250:3128",
-		"socks5://127.0.0.1:1338",
-	)
-	if err != nil {
-		fmt.Println(err)
-	}
-	parentColly.SetProxyFunc(p)
-*/
+
 
 	extensions.RandomUserAgent(parentColly)
 	extensions.Referrer(parentColly)
 	parentColly.Limit(&colly.LimitRule{
 		RandomDelay:2*time.Second,
-		})
+	})
+
 
 
 	subColly :=parentColly.Clone()
 
+/*	err := parentColly.SetStorage(storage1)
+	if err != nil {
+		panic(err)
+	}
+	err = subColly.SetStorage(storage2)
+	if err != nil {
+		panic(err)
+	}*/
 
+	q1, _ := queue.New(8, storage1)
+	q2, _ := queue.New(8, storage2)
+	//q1.AddURL("http://www.csdn.net")
 
 	parentColly.OnRequest(func(r *colly.Request) {
-		//fmt.Println("Visiting", r.URL.String())
+		fmt.Println("Visiting", r.URL.String())
 	})
 
 	parentColly.OnResponse(func(r *colly.Response) {
@@ -250,7 +233,8 @@ func GetCSDNBlog2() {
 		if UrlRe.FindAllStringIndex(reqUrl, 1) == nil {
 			return
 		}
-			subColly.Visit(reqUrl)
+		//subColly.Visit(reqUrl)
+		q2.AddURL(reqUrl)
 	})
 
 
@@ -258,7 +242,8 @@ func GetCSDNBlog2() {
 	parentColly.OnHTML("a[href]", func(e *colly.HTMLElement) {
 		link := e.Attr("href")
 		//fmt.Printf("Link found: %q -> %s\n", e.Text, link)
-			parentColly.Visit(e.Request.AbsoluteURL(link))
+		//parentColly.Visit(e.Request.AbsoluteURL(link))
+		q1.AddURL(e.Request.AbsoluteURL(link))
 	})
 
 	parentColly.OnError(func(r *colly.Response, e error) {
@@ -267,10 +252,98 @@ func GetCSDNBlog2() {
 
 
 	subColly.OnRequest(func(r *colly.Request) {
-		//fmt.Println("subColly Visiting", r.URL.String())
+		fmt.Println("subColly Visiting", r.URL.String())
 	})
 	subColly.OnHTML("div.blog-content-box", func(e *colly.HTMLElement) {
 
+		csdn_blog := model.CSDN_DETAIL{}
+		u,_ := uuid.NewV4()
+		csdn_blog.Id = u.String()
+		csdn_blog.Url = e.Request.URL.String()
+		csdn_blog.Title = e.ChildText("h1.title-article")
+		csdn_blog.Time = e.ChildText("span.time")
+		csdn_blog.Body = strings.Replace(strings.Replace(e.Text, "\n", "", -1), "\t", "", -1)
+		csdn_blog.ReadCount = strings.Split(e.ChildText("span.read-count"), "：")[1]
+		e.ForEach("span.tags-box", func(_ int, el *colly.HTMLElement) {
+			csdn_blog.Keywords = strings.Replace(util.DeleteMoreTab(el.ChildText("a")),"\t"," ",-1)
+
+		})
+
+		csdn_blog.Number = csdn_blog.Url[strings.LastIndex(csdn_blog.Url, "/")+1:]
+		c,_ := orm.CsdnEngine.Table("csdnblog").Insert(&csdn_blog)
+		fmt.Println(c)
+		count++
+		log.Printf("colly count: %d",count)
+
+
+	})
+
+	subColly.OnError(func(r *colly.Response, e error) {
+		fmt.Println("subColly:Request URL：", r.Request.URL, "failed with response:", r, "\nError:", e)
+	})
+	q1.AddURL("http://www.csdn.net")
+	go q2.Run(subColly)
+	q1.Run(parentColly)
+	//log.Println(parentColly)
+	//log.Println(subColly)
+	//parentColly.Visit("http://www.csdn.net")
+
+
+
+
+}
+
+//withRedis
+func GetCSDNBlog3() {
+	count := 0
+	storage1 := &sqlite3.Storage{
+		Filename: "F://colly/collyDB/resultsNew.db",
+	}
+	//parentColly
+	parentColly := colly.NewCollector(
+		colly.AllowedDomains("www.csdn.net",
+			"blog.csdn.net"),
+		//colly.Async(true),
+		colly.DisallowedURLFilters(
+			//regexp.MustCompile("https://blog.csdn.net/column.+"),
+			regexp.MustCompile("https://blog.csdn.net/rss.h.+"),
+			//regexp.MustCompile("https://blog.csdn.net/code/.+"),
+		),
+		colly.MaxDepth(3),
+		colly.CacheDir("F://colly/collyDB/collyCache"),
+
+	)
+	extensions.RandomUserAgent(parentColly)
+	extensions.Referrer(parentColly)
+	parentColly.Limit(&colly.LimitRule{
+		RandomDelay:2*time.Second,
+	})
+
+
+
+
+
+	q1, _ := queue.New(8, storage1)
+
+	parentColly.OnRequest(func(r *colly.Request) {
+		fmt.Println("Visiting", r.URL.String())
+	})
+
+	parentColly.OnResponse(func(r *colly.Response) {
+		/*reqUrl := r.Request.URL.String()
+		if UrlRe.FindAllStringIndex(reqUrl, 1) == nil {
+			return
+		}
+		q1.AddURL(reqUrl)*/
+
+	})
+
+	parentColly.OnHTML("div.blog-content-box", func(e *colly.HTMLElement) {
+
+		reqUrl := e.Request.URL.String()
+		if UrlRe.FindAllStringIndex(reqUrl, 1) == nil {
+			return
+		}
 		csdn_blog := model.CSDN_DETAIL{}
 		u,_ := uuid.NewV4()
 		csdn_blog.Id = u.String()
@@ -295,17 +368,32 @@ func GetCSDNBlog2() {
 
 
 
-		/*log.Printf("count:%d\n", count)
-		log.Println(csdn_blog)*/
 
 	})
 
-	subColly.OnError(func(r *colly.Response, e error) {
-		fmt.Println("subColly:Request URL：", r.Request.URL, "failed with response:", r, "\nError:", e)
+	parentColly.OnHTML("a[href]", func(e *colly.HTMLElement) {
+		link := e.Attr("href")
+		//fmt.Printf("Link found: %q -> %s\n", e.Text, link)
+		//parentColly.Visit(e.Request.AbsoluteURL(link))
+		q1.AddURL(e.Request.AbsoluteURL(link))
 	})
-	parentColly.Visit("http://www.csdn.net")
+
+	parentColly.OnError(func(r *colly.Response, e error) {
+		fmt.Println("parent:Request URL：", r.Request.URL, "failed with response:", r, "\nError:", e)
+	})
+
+
+
+
+
+
+	q1.AddURL("http://www.csdn.net")
+	q1.Run(parentColly)
+
+
 
 
 
 
 }
+
