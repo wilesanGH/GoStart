@@ -97,11 +97,11 @@ func (t *StaffChaincode) addRecord(stub shim.ChaincodeStubInterface, args []stri
 				goto StaffExists
 			}
 		}
-		fmt.Println("staff" + st.RecordStaffId + "does not exist")
-		return shim.Error("staff" + st.RecordStaffId + "does not exist")
+		fmt.Println("staff" + st.RecordStaffId + " does not exist")
+		return shim.Error("staff " + st.RecordStaffId + "does not exist")
 	} else {
-		fmt.Println("staff" + st.RecordStaffId + "does not exist")
-		return shim.Error("staff" + st.RecordStaffId + "does not exist")
+		fmt.Println("staff " + st.RecordStaffId + " does not exist")
+		return shim.Error("staff " + st.RecordStaffId + " does not exist")
 	}
 
 StaffExists:
@@ -205,7 +205,7 @@ func (t *StaffChaincode) queryRecordByID(stub shim.ChaincodeStubInterface, args 
 }
 
 func recordByArgs(args []string) (*Record, error) {
-	if len(args) != 4 {
+	if len(args) != 7 {
 		return nil, errors.New("参数错误：输入7个参数（RecordId,RecordType,RecordValue,RecordStaff,RecordKita,RecordDescription,RecordTime）")
 	}
 
@@ -251,6 +251,6 @@ func queryStaffIds(stub shim.ChaincodeStubInterface) []string {
 
 func main() {
 	if err := shim.Start(new(StaffChaincode)); err != nil {
-		fmt.Println("Error staring staff chaincode: %s", err)
+		fmt.Printf("Error staring staff chaincode: %s", err)
 	}
 }
